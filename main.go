@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ronkiker/chirpy/database"
+	"github.com/ronkiker/chirpy/blob/master/database/database"
 )
 
 type apiConfig struct {
