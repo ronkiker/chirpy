@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/ronkiker/chirpy/database"
 )
 
 type apiConfig struct {
