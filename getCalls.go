@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 )
@@ -8,6 +9,7 @@ import (
 func (cfg *apiConfig) handleGetChirp(w http.ResponseWriter, r *http.Request) {
 	dbChirps, err := cfg.DB.GetChirp()
 	if err != nil {
+		fmt.Println(err)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
 	}
 

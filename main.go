@@ -19,9 +19,16 @@ func main() {
 	const port = "8080"
 	mux := http.NewServeMux()
 
+	db, err := database.NewDB("database/database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	apiCfg := apiConfig{
 		fileserverHits: 0,
+		DB:             db,
 	}
+
 	mux.Handle("/app/*", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(root)))))
 	mux.HandleFunc("GET /api/healthz", handleReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)

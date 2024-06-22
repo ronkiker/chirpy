@@ -23,7 +23,7 @@ type DBStructure struct {
 
 func NewDB(path string) (*DB, error) {
 	db := new(DB)
-	db.path = path
+	db.path = "database/database.json"
 	db.mux = &sync.RWMutex{}
 	err := db.ensureDB()
 	return db, err
@@ -51,6 +51,7 @@ func (db *DB) ensureDB() error {
 }
 
 func (db *DB) loadDB() (DBStructure, error) {
+
 	db.mux.RLock()
 	defer db.mux.RUnlock()
 

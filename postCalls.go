@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 )
@@ -39,11 +40,10 @@ func (cfg *apiConfig) handlePostChirp(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateChirp(body string) (string, error) {
-	if len(params.Body) > 140 {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
-		return
+	if len(body) > 140 {
+		return "", errors.New("Chirp is too long")
 	}
-	return profanityCheck(params.Body), nil
+	return profanityCheck(body), nil
 }
 
 func profanityCheck(text string) string {
