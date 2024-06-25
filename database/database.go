@@ -12,14 +12,12 @@ type DB struct {
 	mux  *sync.RWMutex
 }
 
-type Chirp struct {
-	ID   int    `json:"id"`
-	Body string `json:"body"`
-}
-
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users  map[int]User  `json:"users"`
 }
+
+//var ErrNotExist = errors.New("resource does not exist")
 
 func NewDB(path string) (*DB, error) {
 	db := new(DB)
@@ -29,17 +27,11 @@ func NewDB(path string) (*DB, error) {
 	return db, err
 }
 
-func (db *DB) GetChirp() ([]Chirp, error) {
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		return nil, err
+func (db *DB) createDB() error {
+	dbStructure := DBStructure{
+		Chirps: map[int]Chirp{},
 	}
-
-	chirps := make([]Chirp, 0, len(dbStructure.Chirps))
-	for _, chirp := range dbStructure.Chirps {
-		chirps = append(chirps, chirp)
-	}
-	return chirps, nil
+	return db.writeDB(dbStructure)
 }
 
 func (db *DB) ensureDB() error {
@@ -70,33 +62,6 @@ func (db *DB) loadDB() (DBStructure, error) {
 	return dbStructure, nil
 }
 
-func (db *DB) CreateChirp(body string) (Chirp, error) {
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		return Chirp{}, err
-	}
-	id := len(dbStructure.Chirps) + 1
-	chirp := Chirp{
-		ID:   id,
-		Body: body,
-	}
-	dbStructure.Chirps[id] = chirp
-
-	err = db.writeDB(dbStructure)
-	if err != nil {
-		return Chirp{}, err
-	}
-
-	return chirp, nil
-}
-
-func (db *DB) createDB() error {
-	dbStructure := DBStructure{
-		Chirps: map[int]Chirp{},
-	}
-	return db.writeDB(dbStructure)
-}
-
 func (db *DB) writeDB(dbStructure DBStructure) error {
 	db.mux.Lock()
 	defer db.mux.Unlock()
@@ -112,4 +77,12 @@ func (db *DB) writeDB(dbStructure DBStructure) error {
 	}
 
 	return nil
+}
+
+func (db *DB) ResetDB() error {
+	err := os.Remove(db.path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return db.ensureDB()
 }

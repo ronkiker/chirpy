@@ -2,40 +2,72 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
-	"github.com/ronkiker/chirpy/blob/master/database/database"
+	"github.com/joho/godotenv"
+	"github.com/ronkiker/chirpy/blob/master/database"
 )
 
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	JWT            string
 }
 
 func main() {
 	const root = "."
 	const port = "8080"
-	mux := http.NewServeMux()
+
+	err := godotenv.Load("variables.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if len(jwtSecret) == 0 {
+		log.Fatal("JWT_SECRET not set")
+	}
 
 	db, err := database.NewDB("database/database.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	debug := flag.Bool("debug", false, "Enable debug")
+	flag.Parse()
+	if debug != nil && *debug {
+		err := db.ResetDB()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		JWT:            jwtSecret,
 	}
 
+	mux := http.NewServeMux()
 	mux.Handle("/app/*", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(root)))))
-	mux.HandleFunc("GET /api/healthz", handleReadiness)
-	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
-	mux.HandleFunc("GET /api/reset", apiCfg.handlerReset)
-	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetChirp)
 
-	mux.HandleFunc("POST /api/chirps", apiCfg.handlePostChirp)
+	mux.HandleFunc("GET /api/healthz", handleReadiness)
+	mux.HandleFunc("GET /api/reset", apiCfg.handlerReset)
+
+	mux.HandleFunc("POST /api/login", apiCfg.HandlerLogin)
+
+	mux.HandleFunc("PUT /api/users", apiCfg.HandlerUsersUpdate)
+	mux.HandleFunc("POST /api/users", apiCfg.HandlerUserCreate)
+
+	mux.HandleFunc("POST /api/chirps", apiCfg.HandleChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", apiCfg.HandlerChirpsRetrieve)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.HandlerChirpsGet)
+
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -58,19 +90,24 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("<html><body><h1>Welcome, Chirpy Admin</h1><p>Chirpy has been visited %d times!</p></body></html>", cfg.fileserverHits)))
 }
 
-func respondWithError(w http.ResponseWriter, code int, msg string) {
+func RespondWithError(w http.ResponseWriter, code int, msg string) {
 	if code > 499 {
 		log.Printf("Repsonsing with 5XX error: %s \n", msg)
 	}
-	type errorResponse struct {
-		Error string `json:"error"`
+	if code == 404 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
+	} else {
+		type errorResponse struct {
+			Error string `json:"error"`
+		}
+		RespondWithJSON(w, code, errorResponse{
+			Error: msg,
+		})
 	}
-	respondWithJSON(w, code, errorResponse{
-		Error: msg,
-	})
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	data, err := json.Marshal(payload)
 	if err != nil {
