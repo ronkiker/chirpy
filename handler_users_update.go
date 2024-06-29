@@ -18,13 +18,14 @@ func (cfg *apiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	}
 	token, err := authenticate.GetBearer(r.Header)
 	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "couldn't find JWT")
+		RespondWithError(w, 401, "couldn't find JWT")
 		return
 	}
 
 	subject, err := authenticate.ValidateJWT(token, cfg.JWT)
 	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "couldn't validate JWT")
+		w.WriteHeader(401)
+		//RespondWithError(w, http.StatusUnauthorized, "couldn't validate JWT")
 		return
 	}
 
@@ -33,24 +34,26 @@ func (cfg *apiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	err = decoder.Decode(&params)
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "couldn't decode request")
+		RespondWithError(w, 401, "couldn't decode request")
 		return
 	}
 
 	hash, err := authenticate.HashPassword(params.Password)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "couldn't hash password")
+		RespondWithError(w, 401, "couldn't hash password")
 		return
 	}
 
 	userId, err := strconv.Atoi(subject)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "couldn't parse user id")
+		w.WriteHeader(401)
+		//RespondWithError(w, http.StatusInternalServerError, "couldn't parse user id")
 		return
 	}
 	user, err := cfg.DB.UpdateUser(userId, params.Email, hash)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "couldn't create user")
+		w.WriteHeader(401)
+		//RespondWithError(w, http.StatusInternalServerError, "couldn't create user")
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, response{

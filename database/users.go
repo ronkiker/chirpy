@@ -6,8 +6,8 @@ import (
 
 type User struct {
 	ID             int    `json:"id"`
-	Email          string `json:"email`
-	HashedPassword string `json:hashed_password"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashed_password"`
 }
 
 var ErrUserAlreadyExists = errors.New("already exists")

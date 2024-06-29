@@ -13,11 +13,10 @@ type DB struct {
 }
 
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
-	Users  map[int]User  `json:"users"`
+	Chirps        map[int]Chirp           `json:"chirps"`
+	Users         map[int]User            `json:"users"`
+	RefreshTokens map[string]RefreshToken `json:"refresh_token"`
 }
-
-//var ErrNotExist = errors.New("resource does not exist")
 
 func NewDB(path string) (*DB, error) {
 	db := new(DB)
@@ -27,9 +26,11 @@ func NewDB(path string) (*DB, error) {
 	return db, err
 }
 
-func (db *DB) createDB() error {
+func (db *DB) CreateDB() error {
 	dbStructure := DBStructure{
-		Chirps: map[int]Chirp{},
+		Chirps:        map[int]Chirp{},
+		Users:         map[int]User{},
+		RefreshTokens: map[string]RefreshToken{},
 	}
 	return db.writeDB(dbStructure)
 }
@@ -37,7 +38,7 @@ func (db *DB) createDB() error {
 func (db *DB) ensureDB() error {
 	_, err := os.ReadFile(db.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return db.createDB()
+		return db.CreateDB()
 	}
 	return err
 }

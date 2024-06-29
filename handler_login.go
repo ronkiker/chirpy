@@ -10,12 +10,11 @@ import (
 
 func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Password         string `json:"password"`
-		Email            string `json:"email"`
-		ExpiresInSeconds int    `json:"expires_in_seconds"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
+	//RefreshToken string `json:"refresh_token"`
 	type response struct {
-		User
 		Token string `json:"token"`
 	}
 
@@ -29,33 +28,39 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := cfg.DB.GetUserByEmail(params.Email)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Couldn't get user")
+		RespondWithError(w, http.StatusInternalServerError, "Unable to find user")
 		return
 	}
 
 	err = authenticate.CheckPassword(params.Password, user.HashedPassword)
 	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "Invalid password")
+		RespondWithError(w, http.StatusUnauthorized, "Unable to find user")
 		return
-	}
-	defaultExp := 60 * 60 * 24
-	if params.ExpiresInSeconds == 0 {
-		params.ExpiresInSeconds = defaultExp
-	} else if params.ExpiresInSeconds > defaultExp {
-		params.ExpiresInSeconds = defaultExp
 	}
 
-	token, err := authenticate.CreateJWT(user.ID, cfg.JWT, time.Duration(params.ExpiresInSeconds)*time.Second)
+	accessToken, err := authenticate.CreateJWT(
+		user.ID,
+		cfg.JWT,
+		time.Hour,
+	)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Couldn't create token")
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create access JWT")
 		return
 	}
+	refreshToken, err := authenticate.CreateRefreshToken()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create refresh token")
+		return
+	}
+
+	err = cfg.DB.SaveRefreshToken(user.ID, refreshToken)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't save refresh token")
+		return
+	}
+	//				RefreshToken: refreshToken,
 	RespondWithJSON(w, http.StatusOK, response{
-		User: User{
-			ID:    user.ID,
-			Email: user.Email,
-		},
-		Token: token,
+		Token: accessToken,
 	})
 
 }

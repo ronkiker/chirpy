@@ -51,7 +51,6 @@ func main() {
 		DB:             db,
 		JWT:            jwtSecret,
 	}
-
 	mux := http.NewServeMux()
 	mux.Handle("/app/*", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(root)))))
 
@@ -59,6 +58,8 @@ func main() {
 	mux.HandleFunc("GET /api/reset", apiCfg.handlerReset)
 
 	mux.HandleFunc("POST /api/login", apiCfg.HandlerLogin)
+	mux.HandleFunc("POST /api/refresh", apiCfg.HandlerRefresh)
+	mux.HandleFunc("POST /api/revoke", apiCfg.HandlerRefreshRevoke)
 
 	mux.HandleFunc("PUT /api/users", apiCfg.HandlerUsersUpdate)
 	mux.HandleFunc("POST /api/users", apiCfg.HandlerUserCreate)
