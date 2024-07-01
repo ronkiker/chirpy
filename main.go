@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
 	JWT            string
+	POLKA          string
 }
 
 func main() {
@@ -28,6 +29,7 @@ func main() {
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 	if len(jwtSecret) == 0 {
 		log.Fatal("JWT_SECRET not set")
 	}
@@ -50,6 +52,7 @@ func main() {
 		fileserverHits: 0,
 		DB:             db,
 		JWT:            jwtSecret,
+		POLKA:          polkaKey,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/*", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(root)))))
@@ -66,7 +69,11 @@ func main() {
 
 	mux.HandleFunc("POST /api/chirps", apiCfg.HandleChirpsCreate)
 	mux.HandleFunc("GET /api/chirps", apiCfg.HandlerChirpsRetrieve)
+
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.HandlerChirpsGet)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.HandleChirpsDelete)
+
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.HandlePolkaPost)
 
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 

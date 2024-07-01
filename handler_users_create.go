@@ -9,9 +9,10 @@ import (
 )
 
 type User struct {
-	ID       int    `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"-"`
+	ID        int    `json:"id"`
+	Email     string `json:"email"`
+	Password  string `json:"-"`
+	ChirpyRed bool   `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) HandlerUserCreate(w http.ResponseWriter, r *http.Request) {
@@ -50,8 +51,9 @@ func (cfg *apiConfig) HandlerUserCreate(w http.ResponseWriter, r *http.Request) 
 
 	RespondWithJSON(w, http.StatusCreated, response{
 		User: User{
-			ID:    user.ID,
-			Email: user.Email,
+			ID:        user.ID,
+			Email:     user.Email,
+			ChirpyRed: user.ChirpyRed,
 		},
 	})
 }

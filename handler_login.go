@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/ronkiker/chirpy/blob/master/authenticate"
 )
@@ -15,7 +14,9 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	//RefreshToken string `json:"refresh_token"`
 	type response struct {
-		Token string `json:"token"`
+		ID        int    `json:"id"`
+		Email     string `json:"email"`
+		ChirpyRed bool   `json:"is_chirpy_red"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -31,18 +32,18 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusInternalServerError, "Unable to find user")
 		return
 	}
-
+	chirpyRed := user.ChirpyRed
 	err = authenticate.CheckPassword(params.Password, user.HashedPassword)
 	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, "Unable to find user")
 		return
 	}
 
-	accessToken, err := authenticate.CreateJWT(
-		user.ID,
-		cfg.JWT,
-		time.Hour,
-	)
+	// accessToken, err := authenticate.CreateJWT(
+	// 	user.ID,
+	// 	cfg.JWT,
+	// 	time.Hour,
+	// )
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create access JWT")
 		return
@@ -60,7 +61,9 @@ func (cfg *apiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	//				RefreshToken: refreshToken,
 	RespondWithJSON(w, http.StatusOK, response{
-		Token: accessToken,
+		ID:        user.ID,
+		Email:     user.Email,
+		ChirpyRed: chirpyRed,
 	})
 
 }

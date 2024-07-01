@@ -25,7 +25,6 @@ func (cfg *apiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	subject, err := authenticate.ValidateJWT(token, cfg.JWT)
 	if err != nil {
 		w.WriteHeader(401)
-		//RespondWithError(w, http.StatusUnauthorized, "couldn't validate JWT")
 		return
 	}
 
@@ -47,19 +46,18 @@ func (cfg *apiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	userId, err := strconv.Atoi(subject)
 	if err != nil {
 		w.WriteHeader(401)
-		//RespondWithError(w, http.StatusInternalServerError, "couldn't parse user id")
 		return
 	}
 	user, err := cfg.DB.UpdateUser(userId, params.Email, hash)
 	if err != nil {
 		w.WriteHeader(401)
-		//RespondWithError(w, http.StatusInternalServerError, "couldn't create user")
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, response{
 		User: User{
-			ID:    user.ID,
-			Email: user.Email,
+			ID:        user.ID,
+			Email:     user.Email,
+			ChirpyRed: user.ChirpyRed,
 		},
 	})
 }

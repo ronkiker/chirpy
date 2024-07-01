@@ -49,6 +49,7 @@ func (cfg *apiConfig) HandleChirpsCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var author int
+
 	if (database.User{}) == user {
 		userId, err := authenticate.ValidateJWT(token, cfg.JWT)
 		if err != nil {
@@ -59,17 +60,16 @@ func (cfg *apiConfig) HandleChirpsCreate(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		usr, err := strconv.ParseInt(userId, 0, 0)
+		fmt.Printf("===> usr: %v \n", usr)
 		author = int(usr)
 	} else {
 		author = int(user.ID)
 	}
-
-	chirp, err := cfg.DB.CreateChirp(cleaned, int(user.ID))
+	chirp, err := cfg.DB.CreateChirp(cleaned, author)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create chirp")
 		return
 	}
-	fmt.Printf("AUTHOR ID: %v \n", author)
 	RespondWithJSON(w, 201, Chirp{
 		ID:       chirp.ID,
 		Body:     chirp.Body,
