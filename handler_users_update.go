@@ -53,11 +53,11 @@ func (cfg *apiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(401)
 		return
 	}
+	//	ChirpyRed: user.ChirpyRed,
 	RespondWithJSON(w, http.StatusOK, response{
 		User: User{
-			ID:        user.ID,
-			Email:     user.Email,
-			ChirpyRed: user.ChirpyRed,
+			ID:    user.ID,
+			Email: user.Email,
 		},
 	})
 }

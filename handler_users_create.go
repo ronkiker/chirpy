@@ -8,11 +8,11 @@ import (
 	"github.com/ronkiker/chirpy/blob/master/authenticate"
 )
 
+// ChirpyRed bool   `json:"is_chirpy_red"`
 type User struct {
-	ID        int    `json:"id"`
-	Email     string `json:"email"`
-	Password  string `json:"-"`
-	ChirpyRed bool   `json:"is_chirpy_red"`
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	Password string `json:"-"`
 }
 
 func (cfg *apiConfig) HandlerUserCreate(w http.ResponseWriter, r *http.Request) {
@@ -48,12 +48,11 @@ func (cfg *apiConfig) HandlerUserCreate(w http.ResponseWriter, r *http.Request) 
 		RespondWithError(w, http.StatusInternalServerError, "couldn't create user")
 		return
 	}
-
+	//	ChirpyRed: user.ChirpyRed,
 	RespondWithJSON(w, http.StatusCreated, response{
 		User: User{
-			ID:        user.ID,
-			Email:     user.Email,
-			ChirpyRed: user.ChirpyRed,
+			ID:    user.ID,
+			Email: user.Email,
 		},
 	})
 }

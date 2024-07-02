@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -60,7 +59,6 @@ func (cfg *apiConfig) HandleChirpsCreate(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		usr, err := strconv.ParseInt(userId, 0, 0)
-		fmt.Printf("===> usr: %v \n", usr)
 		author = int(usr)
 	} else {
 		author = int(user.ID)
